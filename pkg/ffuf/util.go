@@ -70,10 +70,34 @@ func RequestContainsKeyword(req Request, kw string) bool {
 
 // HostURLFromRequest gets a host + path without the filename or last part of the URL path
 func HostURLFromRequest(req Request) string {
-	u, _ := url.Parse(req.Url)
+	u, err := url.Parse(req.Url)
+	if err != nil || u == nil {
+		// Return just the host if URL parsing fails
+		return req.Host
+	}
+	
 	u.Host = req.Host
+	
+	// Check if Path is empty or has only one part
+	if u.Path == "" || u.Path == "/" {
+		return u.Host
+	}
+	
 	pathparts := strings.Split(u.Path, "/")
+	
+	// Handle the case where there might not be enough parts
+	// (e.g., "/file" would split to ["", "file"])
+	if len(pathparts) <= 1 {
+		return u.Host
+	}
+	
 	trimpath := strings.TrimSpace(strings.Join(pathparts[:len(pathparts)-1], "/"))
+	
+	// Add a separator if needed
+	if trimpath != "" && !strings.HasPrefix(trimpath, "/") {
+		return u.Host + "/" + trimpath
+	}
+	
 	return u.Host + trimpath
 }
 

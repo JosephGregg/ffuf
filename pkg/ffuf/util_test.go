@@ -24,3 +24,77 @@ func TestUniqStringSlice(t *testing.T) {
 		t.Errorf("Length of slice was %d, was expecting %d", len(uniqSlice), expectedLength)
 	}
 }
+
+func TestHostURLFromRequest(t *testing.T) {
+	tests := []struct {
+		name     string
+		req      Request
+		expected string
+	}{
+		{
+			name: "Normal URL with path",
+			req: Request{
+				Host: "example.com",
+				Url:  "http://example.com/path/to/file",
+			},
+			expected: "example.com/path/to",
+		},
+		{
+			name: "URL with no path",
+			req: Request{
+				Host: "example.com",
+				Url:  "http://example.com",
+			},
+			expected: "example.com",
+		},
+		{
+			name: "URL with root path",
+			req: Request{
+				Host: "example.com",
+				Url:  "http://example.com/",
+			},
+			expected: "example.com",
+		},
+		{
+			name: "URL with single level path",
+			req: Request{
+				Host: "example.com",
+				Url:  "http://example.com/file",
+			},
+			expected: "example.com",
+		},
+		{
+			name: "URL with invalid format",
+			req: Request{
+				Host: "example.com",
+				Url:  "invalid-url",
+			},
+			expected: "example.com",
+		},
+		{
+			name: "URL with empty string",
+			req: Request{
+				Host: "example.com",
+				Url:  "",
+			},
+			expected: "example.com",
+		},
+		{
+			name: "URL with FireProx path",
+			req: Request{
+				Host: "api-id.execute-api.region.amazonaws.com",
+				Url:  "https://api-id.execute-api.region.amazonaws.com/FUZZ",
+			},
+			expected: "api-id.execute-api.region.amazonaws.com",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := HostURLFromRequest(tt.req)
+			if result != tt.expected {
+				t.Errorf("HostURLFromRequest() = %v, want %v", result, tt.expected)
+			}
+		})
+	}
+}
